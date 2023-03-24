@@ -1,56 +1,140 @@
 import re
 # from django.utils import timezone
-from breathecode.authenticate.models import AgentCredentials
-from .models import DecisionTemplate, Option
-from langchain.prompts import PromptTemplate
-from langchain.llms import OpenAI, OpenAIChat
-
-# def ask_which_option():
-def generate_text(text, credentials, model_slug):
-    openai_chat_list = ['gpt-3.5-turbo']
-    if model_slug in openai_chat_list:
-        llm = OpenAIChat(model_name=model_slug , n=2, openai_api_key=credentials)
-        
-    else:
-        llm = OpenAI(model_name=model_slug , n=2, best_of=2, openai_api_key=credentials)
-    answer = llm(text)
-    return  answer
+from chatbot.authenticate.models import AgentCredentials
+from .models import DecisionTemplate, Option, DecisionJob
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts.chat import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    AIMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
+from langchain.schema import (
+    AIMessage,
+    HumanMessage,
+    SystemMessage
+)
+from langchain import OpenAI, ConversationChain, LLMChain, PromptTemplate
+from langchain.memory import ConversationBufferWindowMemory
 
 
 def complete(decision_template_id):
-    decision = DecisionTemplate.objects.filter(id=decision_template_id).first()
-    job.started_at = timezone.now()
-    agent = job.template.engine.agent
-    credentials = AgentCredentials.objects.filter(organization__id=org_id, agent=agent).first()
+    decision = DecisionJob.objects.filter(id=decision_template_id).first()
+    agent = decision.template.engine.agent
+    organization = decision.template.organization
+    credentials = AgentCredentials.objects.filter(organization=organization, agent=agent).first()
 
-    if job.template is not None:
-        variables = list(job.template.variables.keys())
-        for var in variables:
-            if var not in job.inputs:
-                job.status = ERROR
-                raise ValueError(f'Missing key {var} inside inputs dictionary')
-        def replace_variables(text, variables_object):
-            for key, value in variables_object.items():
-                text = text.replace('{' + key + ':' + value + '}', '{' + key + '}').replace('{' + key + ': ' + value + '}', '{' + key + '}').replace('{ ' + key + ': ' + value + ' }', '{' + key + '}').replace('{ ' + key + ':' + value + ' }', '{' + key + '}').replace('{' + key + ':' + value + ' }', '{' + key + '}')
-                # I'm trying to manage some possibilities that someone can typically write the variables in the template
-                text = text.replace(',', '')
-            return text
-        text = replace_variables(job.template.body, job.template.variables)
-        prompt = PromptTemplate(
-            input_variables=variables,
-            template=text,
-        )
-        response = prompt.format(**job.inputs)
-        job.prompt = response
-        model_slug = job.template.engine.slugify()
-        job.answer = generate_text(response, credentials.token, model_slug)
-        job.status = SUCCESS
-        job.ended_at = timezone.now()
-        job.save()
-        return job
-    job.answer = generate_text(job.prompt, credentials.token)
-    job.status = SUCCESS
-    job.ended_at = timezone.now()
-    job.save()
-    return job
+
+    def generate_option_text(decision_template):
+        options = decision_template.option_set.all()
+        option_text = ""
+        for option in options:
+            option_text += f"{option.name}:{option.body},url:{option.link},"
+        return option_text[:-1]
+    
+    options_text = generate_option_text(decision.template)
+    
+    template = """	Eres un chatbot asistente de la empresa XtrimTV, vas a recibir el input de un cliente de la empresa, salúdalo y dale las indicaciones correctas según su requerimiento.
+    Vas a tener una lista de opciones a tu disposición, cada una de las cuales puede ser la que el cliente quiere realizar.
+    Tu objetivo es darle un mensaje apropiado según la opción que quiere realizar y devolverle, además del mensaje, el url para realizar el trámite.
+
+    Devuelve en el siguiente formato:
+
+    Debes redactar un mensaje apropiado para el usuario y darle el link de la opción que desea realizar dentro de una etiqueta de anchor <a>
+
+    {history}
+    Input del usuario: {human_input}
+
+    """
+    final_template = template + options_text + "description: url:"
+    prompt = PromptTemplate(
+        input_variables=["history", "human_input"], 
+        template=final_template
+    )
+
+
+    chatgpt_chain = LLMChain(
+        llm=ChatOpenAI(temperature=0, openai_api_key=credentials.token), 
+        prompt=prompt, 
+        memory=ConversationBufferWindowMemory(k=2),
+    )
+    output = chatgpt_chain.predict(human_input=decision.user_input)
+    print(output)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def generate_text(text, credentials, model_slug):
+#     chat = ChatOpenAI(temperature=0, openai_api_key=credentials)
+
+#     messages = [
+#     SystemMessage(content="You are a helpful assistant that translates English to French."),
+#     HumanMessage(content="Translate this sentence from English to French. I love programming.")
+#     ]
+#     answer = llm(text)
+#     return  answer
+
+
+# def complete(decision_template_id):
+#     decision = DecisionJob.objects.filter(id=decision_template_id).first()
+#     decision.started_at = timezone.now()
+    # agent = decision.template.engine.agent
+    # organization = decision.template.organization
+    # credentials = AgentCredentials.objects.filter(organization=organization, agent=agent).first()
+
+
+    # def generate_option_text(decision_template):
+    #     options = decision_template.option_set.all()
+    #     option_text = ""
+    #     for option in options:
+    #         option_text += f"{option.name}:{option.body},url:{option.link},"
+    #     return option_text[:-1]
+    
+    # options_text = generate_option_text(decision.template)
+
+#     text = decision.template.body + options_text
+#     chat = ChatOpenAI(temperature=0, openai_api_key=credentials)
+
+#     messages = [
+#     SystemMessage(content=text),
+#     HumanMessage(content=decision.user_input)
+#     ]
+
+#     # chat(messages)
+
+#     print(chat.messages)
+#     # job.status = SUCCESS
+#     # job.ended_at = timezone.now()
+#     # job.save()
+#     # return job
     

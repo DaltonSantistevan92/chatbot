@@ -18,13 +18,6 @@ class DecisionTemplate(models.Model):
     def __str__(self):
         return self.name
     
-    # def save(self, *args, **kwargs):
-    #     from .actions import track_template_versions
-    #     self.find_variables()
-    #     self.variables = self.find_variables()
-    #     super().save(*args, **kwargs)  # Call the "real" save() method.
-    #     track_template_versions(self)
-
 
 class Option(models.Model):
     name = models.CharField(max_length=100)
