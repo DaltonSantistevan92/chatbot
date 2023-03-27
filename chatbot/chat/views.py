@@ -1,39 +1,22 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from .actions import complete
+import requests
 # Create your views here.
+
 def hello(request):
-    complete(1)
-    return HttpResponse('Hello World asd')
+    query = request.POST['query']
+    if request.method == 'POST' and query:
+        url = "https://incoming.xfiv.chat/xtrim/api/v1/buscarEstatusCuenta"
+        payload = {"cedula": query}
+        response = requests.post(url, json=payload)
+        data = response.json()
+        contrato = data['dara']['Contrato']['NumeroContrato']
+        return render(request, 'base.html', {'response': contrato, 'query': query})
+    else:
+        return render(request, 'base.html')
 
 
-
-# class DecisionJob(generics.CreateAPIView):
-#     queryset = CompletionJob.objects.all()
-#     serializer_class = CompletionSerializer
-#     permission_classes = [AllowAny]
-#     def post(self, request, *args, **kwargs):
-#         extension = request.data.get('extension')
-#         token_key = request.data.get('token')
-#         token=Token.objects.filter(key=token_key).first()
-#         user = User.objects.filter(auth_token=token).first()
-#         template_id = self.request.query_params.get('template_id')
-#         template=PromptTemplate.objects.filter(id=template_id).first()
-#         if template is None:
-#             raise ValidationException('Template not found', code=404)
-#         if extension:
-#             inputs = self.request.data.get('inputs')
-#         else:
-#             inputs=dict(self.request.POST)
-#             inputs.pop('organization')
-#             inputs.pop('token')
-#         for key, value in inputs.items():
-#             inputs[key] = value
-#         instance = CompletionJob.objects.create(template=template, inputs=inputs)
-#         instance = complete(instance.id, template.organization.id)
-#         data = {
-#             'answer': instance.answer,
-#             'completion': instance.id
-#         }
-#         return Response(data, status=status.HTTP_201_CREATED)
-
+def generar_link_de_pago(request):
+    cedula = request.POST['cedula']
+    email = request.POST['email']

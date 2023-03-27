@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <!-- Agregar los enlaces a los archivos CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Signika&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-one: rgb(170, 195, 178);
+            --color-two: #DAD9F3;
+        }
+        body {
+            background: linear-gradient(rgb(185, 190, 225), rgb(170, 195, 178));
+            font-family: 'Signika', sans-serif;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .container > form >* {
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Signika', sans-serif;
+            font-size: 15px;
+            border: 0;
+        }
+        .container > form > button {
+            background: linear-gradient(var(--color-two), var(--color-one));
+        }
+        .container > form >button:hover {
+            background: linear-gradient(rgb(138, 210, 161), var(--color-one));
+            cursor: pointer;
+        }
+        .container >form > input {
+            width: 250px;
+        }
+        
+    </style>
+</head>
+<body>
+    <main>
+        <div class="container">
+            <form action="/v1/chat/hello/" method="POST">
+                {% csrf_token %}
+                <input placeholder="Hola, ¿cómo puedo ayudarte?" type="text" name="query">
+                <button class="chat-submit" type="submit">Buscar</button>
+            </form>
+            <section class="chat-container">
+                {{response}}
+            </section>
+        </div>
+    </main>
+    <script>
+
+        var chatContainer = document.querySelector(".chat-container");
+        var response = document.querySelector('.chat-container').innerText
+
+
+        var typingSpeed = 100;
+
+
+        function typeText(text, i) {
+            setTimeout(function() {
+                chatContainer.innerText = '';
+                chatContainer.innerText += text.substr(0, i);
+                if (i < text.length) {
+                    typeText(text, i+1);
+                }
+            }, typingSpeed);
+        }
+
+        // Call the typeText function with the response text
+        typeText(response, 0);
+    </script>
+</body>
+</html>
