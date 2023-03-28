@@ -5,14 +5,11 @@ import requests
 # Create your views here.
 
 def hello(request):
-    query = request.POST['query']
-    if request.method == 'POST' and query:
-        url = "https://incoming.xfiv.chat/xtrim/api/v1/buscarEstatusCuenta"
-        payload = {"cedula": query}
-        response = requests.post(url, json=payload)
-        data = response.json()
-        contrato = data['dara']['Contrato']['NumeroContrato']
-        return render(request, 'base.html', {'response': contrato, 'query': query})
+    
+    if request.method == 'POST':
+        query = request.POST['query']
+        response = complete(1, query)
+        return render(request, 'base.html', {'response': response})
     else:
         return render(request, 'base.html')
 

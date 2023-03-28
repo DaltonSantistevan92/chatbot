@@ -18,7 +18,7 @@ from langchain import OpenAI, ConversationChain, LLMChain, PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
 
 
-def complete(decision_template_id):
+def complete(decision_template_id, input_text):
     decision = DecisionJob.objects.filter(id=decision_template_id).first()
     agent = decision.template.engine.agent
     organization = decision.template.organization
@@ -29,24 +29,29 @@ def complete(decision_template_id):
         options = decision_template.option_set.all()
         option_text = ""
         for option in options:
-            option_text += f"{option.name}:{option.body},url:{option.link},"
+            option_text += f"{option.name}:{option.body},url:{option.link} |"
         return option_text[:-1]
     
     options_text = generate_option_text(decision.template)
     
-    template = """	Eres un chatbot asistente de la empresa XtrimTV, vas a recibir el input de un cliente de la empresa, salúdalo y dale las indicaciones correctas según su requerimiento.
+    template = """Eres un chatbot asistente de la empresa XtrimTV, vas a recibir el input de un cliente de la empresa, salúdalo y dale las indicaciones correctas según su requerimiento.
     Vas a tener una lista de opciones a tu disposición, cada una de las cuales puede ser la que el cliente quiere realizar.
-    Tu objetivo es darle un mensaje apropiado según la opción que quiere realizar y devolverle, además del mensaje, el url para realizar el trámite.
+    Tu objetivo es darle un mensaje apropiado según la opción que quiere realizar y devolverle, además del mensaje, el url para realizar el trámite en caso de que el trámite esté contemplado en las opciones
 
     Devuelve en el siguiente formato:
 
-    Debes redactar un mensaje apropiado para el usuario y darle el link de la opción que desea realizar dentro de una etiqueta de anchor <a>
+    Debes redactar un mensaje apropiado para el usuario y darle el link de la opción que desea realizar dentro de un string con forma de HTML
+    Por ejemplo: <div>¡Hola! Para ver los términos y condiciones ver a siguiente enlace <a href="url a los TyC"> Términos y condiciones </a> </div>
 
-    {history}
     Input del usuario: {human_input}
 
+    {history}
+    
+    Las opciones son:
+
     """
-    final_template = template + options_text + "description: url:"
+
+    final_template = template + options_text
     prompt = PromptTemplate(
         input_variables=["history", "human_input"], 
         template=final_template
@@ -58,8 +63,9 @@ def complete(decision_template_id):
         prompt=prompt, 
         memory=ConversationBufferWindowMemory(k=2),
     )
-    output = chatgpt_chain.predict(human_input=decision.user_input)
-    print(output)
+    output = chatgpt_chain.predict(human_input=input_text)
+    # print(output)
+    return output
 
 
 

@@ -8,13 +8,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Signika&display=swap" rel="stylesheet">
     <style>
         :root {
-            --color-one: rgb(170, 195, 178);
-            --color-two: #DAD9F3;
+            --color-one: rgb(190, 179, 233);
+            --color-two: #cecdea;
         }
         body {
-            background: linear-gradient(rgb(185, 190, 225), rgb(170, 195, 178));
+            
             font-family: 'Signika', sans-serif;
             overflow: hidden;
+            background: linear-gradient(to bottom right, #9BA5E6, #969ab34e),linear-gradient(to bottom right, #EAB4B4, #D68585),linear-gradient(to bottom right, rgba(255, 255, 255, 0.285), rgba(255, 255, 255, 0.734));
         }
         .container {
             display: flex;
@@ -34,11 +35,23 @@
             background: linear-gradient(var(--color-two), var(--color-one));
         }
         .container > form >button:hover {
-            background: linear-gradient(rgb(138, 210, 161), var(--color-one));
+            background:linear-gradient(to bottom right, #EAB4B4, #D68585);
             cursor: pointer;
         }
         .container >form > input {
             width: 250px;
+        }
+        .chat-container {
+            margin-top: 20px;
+            width: 50%;
+        }
+        .chat-container > div> a {
+            color: rgb(23, 8, 155);
+            text-decoration: underline;
+        
+        }
+        .chat-container > div> a:hover {
+            color: rgb(3, 56, 56);
         }
         
     </style>
@@ -46,37 +59,41 @@
 <body>
     <main>
         <div class="container">
-            <form action="/v1/chat/hello/" method="POST">
+            <form id="form" action="/v1/chat/hello/" method="POST">
                 {% csrf_token %}
-                <input placeholder="Hola, ¿cómo puedo ayudarte?" type="text" name="query">
+                <input id="voice-input" placeholder="Hola, ¿cómo puedo ayudarte?" type="text" name="query">
                 <button class="chat-submit" type="submit">Buscar</button>
+                <button class="voice-button" type="submit"><i class="fa-solid fa-microphone"></i></button>
             </form>
             <section class="chat-container">
-                {{response}}
+                {{ response|safe }}
             </section>
         </div>
     </main>
     <script>
 
-        var chatContainer = document.querySelector(".chat-container");
-        var response = document.querySelector('.chat-container').innerText
+const voiceInput = document.querySelector('#voice-input');
+  const searchBtn = document.querySelector('.voice-button');
+  const myForm = document.querySelector('#form');
 
+  let recognition;
 
-        var typingSpeed = 100;
+searchBtn.addEventListener('mousedown', () => {
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = 'es-MX';
+  recognition.start();
+  
+  recognition.onresult = (event) => {
+      const result = event.results[0][0].transcript;
+      voiceInput.value = result;
+    };
+});
 
+searchBtn.addEventListener('mouseup', () => {
+  recognition.stop();
+});
 
-        function typeText(text, i) {
-            setTimeout(function() {
-                chatContainer.innerText = '';
-                chatContainer.innerText += text.substr(0, i);
-                if (i < text.length) {
-                    typeText(text, i+1);
-                }
-            }, typingSpeed);
-        }
-
-        // Call the typeText function with the response text
-        typeText(response, 0);
     </script>
+    <script src="https://kit.fontawesome.com/8ea552d239.js" crossorigin="anonymous"></script>
 </body>
 </html>
