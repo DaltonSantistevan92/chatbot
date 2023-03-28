@@ -13,3 +13,5 @@ $ pip install -r requirements.txt
 
 # 5. Start the project
 $ python manage.py runserver
+
+# 6. In the 8000 port go to the route /v1/chat/xtrim/ and make a query

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <!-- Agregar los enlaces a los archivos CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Signika&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-one: rgb(190, 179, 233);
+            --color-two: #cecdea;
+        }
+        body {
+            
+            font-family: 'Signika', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(to bottom right, #9BA5E6, #969ab34e),linear-gradient(to bottom right, #EAB4B4, #D68585),linear-gradient(to bottom right, rgba(255, 255, 255, 0.285), rgba(255, 255, 255, 0.734));
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .container > form >* {
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Signika', sans-serif;
+            font-size: 15px;
+            border: 0;
+        }
+        .container > form > button {
+            background: linear-gradient(var(--color-two), var(--color-one));
+        }
+        .container > form >button:hover {
+            background:linear-gradient(to bottom right, #EAB4B4, #D68585);
+            cursor: pointer;
+        }
+        .container >form > input {
+            width: 250px;
+        }
+        .chat-container {
+            margin-top: 20px auto;
+            width: 50%;
+            text-align: center;
+        }
+        .chat-container > div> a {
+            color: rgb(23, 8, 155);
+            text-decoration: underline;
+        
+        }
+        .chat-container > div> a:hover {
+            color: rgb(3, 56, 56);
+        }
+        
+    </style>
+</head>
+<body>
+    <main>
+        <div class="container">
+            <form id="form" action="/v1/chat/code/" method="POST">
+                {% csrf_token %}
+                <input id="voice-input" placeholder="Tell me what do you want to build" type="text" name="query">
+                <button class="chat-submit" type="submit">Buscar</button>
+                <button class="voice-button" type="submit"><i class="fa-solid fa-microphone"></i></button>
+            </form>
+            <section class="chat-container">
+                {{ response|safe }}
+            </section>
+        </div>
+    </main>
+    <script>
+
+const voiceInput = document.querySelector('#voice-input');
+  const searchBtn = document.querySelector('.voice-button');
+  const myForm = document.querySelector('#form');
+
+  let recognition;
+
+searchBtn.addEventListener('mousedown', () => {
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = 'es-MX';
+  recognition.start();
+  
+  recognition.onresult = (event) => {
+      const result = event.results[0][0].transcript;
+      voiceInput.value = result;
+    };
+});
+
+searchBtn.addEventListener('mouseup', () => {
+  recognition.stop();
+});
+
+    </script>
+    <script src="https://kit.fontawesome.com/8ea552d239.js" crossorigin="anonymous"></script>
+</body>
+</html>

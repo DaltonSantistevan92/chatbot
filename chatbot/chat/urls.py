@@ -1,9 +1,10 @@
 from django.urls import path, include
-from .views import  hello
+from .views import  hello, build
 
 
 app_name = 'chat'
 
 urlpatterns = [
-    path('hello/', hello, name='hello'),
+    path('xtrim/', hello, name='hello'),
+    path('code/', build, name='code'),
 ]

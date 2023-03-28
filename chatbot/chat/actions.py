@@ -74,6 +74,43 @@ def complete(decision_template_id, input_text):
 
 
 
+def code(decision_template_id, input_text):
+    decision = DecisionTemplate.objects.filter(id=decision_template_id).first()
+    agent = decision.engine.agent
+    organization = decision.organization
+    credentials = AgentCredentials.objects.filter(organization=organization, agent=agent).first()
+
+
+    
+    template = """
+    Remember that all your answer must be inside proper HTML tags, you're a HTML builder
+
+    New feature: {human_input}
+
+    {history}
+    
+
+    """
+
+    final_template = decision.body + template
+    prompt = PromptTemplate(
+        input_variables=["history", "human_input"], 
+        template=final_template
+    )
+
+
+    chatgpt_chain = LLMChain(
+        llm=ChatOpenAI(temperature=0, openai_api_key=credentials.token), 
+        prompt=prompt, 
+        memory=ConversationBufferWindowMemory(k=2),
+    )
+    output = chatgpt_chain.predict(human_input=input_text)
+    # print(output)
+    return output
+
+
+
+
 
 
 
